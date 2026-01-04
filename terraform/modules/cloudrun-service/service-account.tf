@@ -4,7 +4,7 @@ data "google_service_account" "this" {
 }
 
 data "google_compute_default_service_account" "this" {
-  count   = !var.service_account_config.create ? 1 : 0
+  count   = !var.service_account_config.create && var.service_account_config.email == null ? 1 : 0
   project = var.project_id
 }
 
@@ -20,13 +20,8 @@ resource "google_service_account" "this" {
 }
 
 resource "google_project_iam_member" "this" {
-  for_each = (
-    var.service_account_config.create
-    ? toset(local.service_account_roles)
-    : toset([])
-  )
-
-  project = var.project_id
-  role    = each.key
-  member  = google_service_account.this[0].member
+  for_each = toset(local.service_account_roles)
+  project  = var.project_id
+  role     = each.key
+  member   = google_service_account.this[0].member
 }
