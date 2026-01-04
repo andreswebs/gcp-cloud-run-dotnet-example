@@ -1,7 +1,3 @@
-locals {
-  image = "gcr.io/${var.project}/example-api:latest"
-}
-
 module "service" {
   source     = "../../modules/cloudrun-service"
   project_id = var.project
@@ -15,7 +11,7 @@ module "service" {
   containers = [
     {
       name  = "example-api"
-      image = local.image
+      image = var.image_uri
       liveness_probe = {
         http_get = {
           path = "/healthz"
