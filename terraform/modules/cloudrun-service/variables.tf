@@ -6,11 +6,16 @@ variable "containers" {
     depends_on = optional(list(string))
     command    = optional(list(string))
     args       = optional(list(string))
-    env        = optional(map(string))
-    env_from = optional(map(object({
-      secret  = string
-      version = string
-    })))
+    env = optional(list(object({
+      name  = string,
+      value = optional(string),
+      value_source = optional(object({
+        secret_key_ref = optional(object({
+          secret  = string,
+          version = optional(string, "latest")
+        }))
+      }))
+    }))),
     liveness_probe = optional(object({
       grpc = optional(object({
         port    = optional(number)
@@ -171,6 +176,13 @@ variable "revision_config" {
   }
 }
 
+variable "secrets_access" {
+  description = "List of secret IDs or names to provide access to."
+  type        = list(string)
+  nullable    = false
+  default     = []
+}
+
 variable "service_account_config" {
   description = "Service account configurations."
   type = object({
@@ -270,3 +282,4 @@ variable "volumes" {
     error_message = "Only one type of volume can be defined at a time."
   }
 }
+

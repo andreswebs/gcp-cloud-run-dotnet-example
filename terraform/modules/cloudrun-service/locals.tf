@@ -5,11 +5,7 @@ locals {
     var.revision_config.name == null ? null : "${var.name}-${var.revision_config.name}"
   )
 
-  service_account_email = (
-    var.service_account_config.create
-    ? google_service_account.this[0].email
-    : (var.service_account_config.email == null ? null : var.service_account_config.email)
-  )
+  service_account = var.service_account_config.create ? try(google_service_account.this[0], null) : try(data.google_service_account.this[0], try(data.google_compute_default_service_account.this[0], null))
 
   service_account_roles = distinct(compact(concat(var.service_account_default_roles, var.service_account_config.roles)))
 

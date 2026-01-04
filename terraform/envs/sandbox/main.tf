@@ -17,10 +17,25 @@ module "service" {
           path = "/healthz"
         }
       }
-      env = {
-        TEST = "ok"
-      }
+      env = [
+        # {
+        #   name  = "TEST"
+        #   value = "ok"
+        # },
+        {
+          name = "TEST"
+          value_source = {
+            secret_key_ref = {
+              secret = "TEST"
+            }
+          }
+        },
+      ]
     },
+  ]
+
+  secrets_access = [
+    "TEST",
   ]
 
 }

@@ -1,3 +1,13 @@
+data "google_service_account" "this" {
+  count      = !var.service_account_config.create && var.service_account_config.email != null ? 1 : 0
+  account_id = var.service_account_config.email
+}
+
+data "google_compute_default_service_account" "this" {
+  count   = !var.service_account_config.create ? 1 : 0
+  project = var.project_id
+}
+
 resource "google_service_account" "this" {
   count      = var.service_account_config.create ? 1 : 0
   project    = var.project_id

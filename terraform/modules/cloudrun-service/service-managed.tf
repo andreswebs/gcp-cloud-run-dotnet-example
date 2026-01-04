@@ -1,5 +1,8 @@
 resource "google_cloud_run_v2_service" "managed" {
-  count                = length(var.containers) > 0 && var.is_managed_revision ? 1 : 0
+  count = length(var.containers) > 0 && var.is_managed_revision ? 1 : 0
+
+  depends_on = [google_secret_manager_secret_iam_member.this]
+
   annotations          = var.service_config.annotations
   client               = var.service_config.client
   client_version       = var.service_config.client_version
@@ -25,7 +28,7 @@ resource "google_cloud_run_v2_service" "managed" {
     revision                         = local.revision_name
     gpu_zonal_redundancy_disabled    = var.revision_config.gpu_zonal_redundancy_disabled
     max_instance_request_concurrency = var.service_config.max_concurrency
-    service_account                  = local.service_account_email
+    service_account                  = local.service_account.email
     timeout                          = var.service_config.timeout
 
     dynamic "node_selector" {
@@ -79,21 +82,20 @@ resource "google_cloud_run_v2_service" "managed" {
         args       = containers.value.args
 
         dynamic "env" {
-          for_each = coalesce(containers.value.env, tomap({}))
+          for_each = try(containers.value.env, null) != null ? containers.value.env : []
           content {
-            name  = env.key
-            value = env.value
-          }
-        }
-
-        dynamic "env" {
-          for_each = coalesce(containers.value.env_from, tomap({}))
-          content {
-            name = env.key
-            value_source {
-              secret_key_ref {
-                secret  = env.value.secret
-                version = env.value.version
+            name  = env.value.name
+            value = try(env.value.value, null)
+            dynamic "value_source" {
+              for_each = try(env.value.value_source, null) != null ? [true] : []
+              content {
+                dynamic "secret_key_ref" {
+                  for_each = try(env.value.value_source.secret_key_ref, null) != null ? [true] : []
+                  content {
+                    secret  = env.value.value_source.secret_key_ref.secret
+                    version = try(env.value.value_source.secret_key_ref.version, null)
+                  }
+                }
               }
             }
           }
