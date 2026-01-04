@@ -7,7 +7,7 @@ variable "containers" {
     command    = optional(list(string))
     args       = optional(list(string))
     env        = optional(map(string))
-    env_from_key = optional(map(object({
+    env_from = optional(map(object({
       secret  = string
       version = string
     })))

@@ -87,7 +87,7 @@ resource "google_cloud_run_v2_service" "unmanaged" {
         }
 
         dynamic "env" {
-          for_each = coalesce(containers.value.env_from_key, tomap({}))
+          for_each = coalesce(containers.value.env_from, tomap({}))
           content {
             name = env.key
             value_source {

@@ -17,6 +17,9 @@ module "service" {
           path = "/healthz"
         }
       }
+      env = {
+        TEST = "ok"
+      }
     },
   ]
 
