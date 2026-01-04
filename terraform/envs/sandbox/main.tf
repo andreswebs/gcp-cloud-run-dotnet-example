@@ -25,10 +25,30 @@ module "service" {
         }
       }
       env = [
-        {
-          name  = "TEST"
-          value = "ok"
-        },
+        # {
+        #   name  = "CORECLR_ENABLE_PROFILING"
+        #   value = "1"
+        # },
+        # {
+        #   name  = "DD_PROFILING_ALLOCATION_ENABLED"
+        #   value = "true"
+        # },
+        # {
+        #   name  = "DD_RUNTIME_METRICS_ENABLED"
+        #   value = "true"
+        # },
+        # {
+        #   name  = "DD_PROFILING_ENABLED"
+        #   value = "true"
+        # },
+        # {
+        #   name  = "DD_CODE_ORIGIN_FOR_SPANS_ENABLED"
+        #   value = "true"
+        # },
+        # {
+        #   name  = "DD_APM_ENABLED"
+        #   value = "true"
+        # },
       ]
     },
     # {
