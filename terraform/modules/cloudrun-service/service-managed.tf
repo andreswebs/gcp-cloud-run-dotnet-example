@@ -119,16 +119,17 @@ resource "google_cloud_run_v2_service" "managed" {
         }
 
         dynamic "volume_mounts" {
-          for_each = { for k, v in coalesce(containers.value.volume_mounts, tomap({})) : k => v if k != "cloudsql" }
+          for_each = try(containers.value.volume_mounts, null) != null ? [for v in containers.value.volume_mounts : v if v.name != "cloudsql"] : []
           content {
-            name       = volume_mounts.key
-            mount_path = volume_mounts.value
+            name       = volume_mounts.value.name
+            mount_path = volume_mounts.value.mount_path
+            sub_path   = try(volume_mounts.value.sub_path, null)
           }
         }
 
         # CloudSQL is the last mount in the list returned by API
         dynamic "volume_mounts" {
-          for_each = { for k, v in coalesce(containers.value.volume_mounts, tomap({})) : k => v if k == "cloudsql" }
+          for_each = try(containers.value.volume_mounts, null) != null ? [for v in containers.value.volume_mounts : v if v.name == "cloudsql"] : []
           content {
             name       = volume_mounts.key
             mount_path = volume_mounts.value

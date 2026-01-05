@@ -1,5 +1,5 @@
 variable "containers" {
-  description = "Containers in name => attributes format."
+  description = "List of container objects."
   type = list(object({
     name       = string
     image      = string
@@ -58,7 +58,11 @@ variable "containers" {
       period_seconds        = optional(number)
       timeout_seconds       = optional(number)
     }))
-    volume_mounts = optional(map(string))
+    volume_mounts = optional(list(object({
+      name       = string,
+      mount_path = string,
+      sub_path   = optional(string)
+    })))
   }))
   default  = []
   nullable = false

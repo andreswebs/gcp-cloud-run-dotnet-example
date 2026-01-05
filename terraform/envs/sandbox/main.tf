@@ -23,17 +23,20 @@ module "service" {
       name        = "example-api"
       image       = var.image_uri
       description = "An example .NET web api to test Datadog configuration"
+
       resources = {
         limits = {
           cpu    = "1"
           memory = "512Mi"
         }
       }
+
       liveness_probe = {
         http_get = {
           path = "/healthz"
         }
       }
+
       env = [
         # {
         #   name  = "CORECLR_ENABLE_PROFILING"
@@ -74,6 +77,13 @@ module "service" {
         {
           name  = "DD_VERSION" ## set to git sha
           value = "4"
+        },
+      ]
+
+      volume_mounts = [
+        {
+          name       = "logs"
+          mount_path = "/app/logs"
         },
       ]
     },
