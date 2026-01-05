@@ -206,47 +206,45 @@ resource "google_cloud_run_v2_service" "unmanaged" {
     }
 
     dynamic "volumes" {
-      for_each = { for k, v in var.volumes : k => v if v.cloud_sql_instances == null }
+      for_each = [for v in var.volumes : v if v.cloud_sql_instances == null]
       content {
-        name = volumes.key
-        dynamic "secret" {
-          for_each = volumes.value.secret == null ? [] : [""]
+        name = volumes.value.name
+        dynamic "empty_dir" {
+          for_each = try(volumes.value.empty_dir, null) != null ? [true] : []
           content {
-            secret       = volumes.value.secret.name
-            default_mode = volumes.value.secret.default_mode
+            medium     = try(volumes.value.empty_dir.medium, null)
+            size_limit = try(volumes.value.empty_dir.size_limit, null)
+          }
+        }
+        dynamic "gcs" {
+          for_each = try(volumes.value.gcs, null) != null ? [true] : []
+          content {
+            bucket        = volumes.value.gcs.bucket
+            mount_options = try(volumes.value.gcs.mount_options, null)
+            read_only     = try(volumes.value.gcs.read_only, null)
+          }
+        }
+        dynamic "nfs" {
+          for_each = try(volumes.value.nfs, null) != null ? [true] : []
+          content {
+            path      = volumes.value.nfs.path
+            read_only = try(volumes.value.nfs.read_only, null)
+            server    = volumes.value.nfs.server
+          }
+        }
+        dynamic "secret" {
+          for_each = try(volumes.value.secret, null) != null ? [true] : []
+          content {
+            default_mode = try(volumes.value.secret.default_mode, null)
+            secret       = volumes.value.secret.secret
             dynamic "items" {
-              for_each = volumes.value.secret.path == null ? [] : [""]
+              for_each = try(volumes.value.secret.items, null) != null ? volumes.value.secret.items : []
               content {
-                path    = volumes.value.secret.path
-                version = volumes.value.secret.version
-                mode    = volumes.value.secret.mode
+                mode    = try(items.value.mode, null)
+                path    = items.value.path
+                version = try(items.value.version, null)
               }
             }
-          }
-        }
-
-        dynamic "empty_dir" {
-          for_each = volumes.value.empty_dir_size == null ? [] : [""]
-          content {
-            medium     = "MEMORY"
-            size_limit = volumes.value.empty_dir_size
-          }
-        }
-
-        dynamic "gcs" {
-          for_each = volumes.value.gcs == null ? [] : [""]
-          content {
-            bucket    = volumes.value.gcs.bucket
-            read_only = volumes.value.gcs.is_read_only
-          }
-        }
-
-        dynamic "nfs" {
-          for_each = volumes.value.nfs == null ? [] : [""]
-          content {
-            server    = volumes.value.nfs.server
-            path      = volumes.value.nfs.path
-            read_only = volumes.value.nfs.is_read_only
           }
         }
       }
@@ -254,13 +252,13 @@ resource "google_cloud_run_v2_service" "unmanaged" {
 
     # CloudSQL is the last volume in the list returned by API
     dynamic "volumes" {
-      for_each = { for k, v in var.volumes : k => v if v.cloud_sql_instances != null }
+      for_each = [for v in var.volumes : v if v.cloud_sql_instances != null]
       content {
-        name = volumes.key
+        name = volumes.value.name
         dynamic "cloud_sql_instance" {
-          for_each = length(coalesce(volumes.value.cloud_sql_instances, [])) == 0 ? [] : [""]
+          for_each = try(volumes.value.cloud_sql_instance, null) != null ? [true] : []
           content {
-            instances = volumes.value.cloud_sql_instances
+            instances = try(volumes.value.cloud_sql_instance.instances, null)
           }
         }
       }

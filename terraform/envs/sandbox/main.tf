@@ -109,4 +109,14 @@ module "service" {
     "DD_API_KEY",
   ]
 
+  volumes = [
+    {
+      name = "logs"
+      empty_dir = {
+        medium     = "MEMORY"
+        size_limit = "512Mi"
+      }
+    },
+  ]
+
 }

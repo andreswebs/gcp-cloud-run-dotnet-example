@@ -251,33 +251,44 @@ variable "tag_bindings" {
 
 variable "volumes" {
   description = "Named volumes in containers in name => attributes format."
-  type = map(object({
-    secret = optional(object({
-      name         = string
-      default_mode = optional(string)
-      path         = optional(string)
-      version      = optional(string)
-      mode         = optional(string)
-    }))
-    cloud_sql_instances = optional(list(string))
-    empty_dir_size      = optional(string)
+  type = list(object({
+    name = string,
+    cloud_sql_instance = optional(object({
+      instances = optional(list(string))
+    })),
+    empty_dir = optional(object({
+      medium     = optional(string),
+      size_limit = optional(string)
+    })),
     gcs = optional(object({
-      # needs revision.gen2_execution_environment
-      bucket       = string
-      is_read_only = optional(bool)
-    }))
+      bucket        = string,
+      mount_options = optional(list(string)),
+      read_only     = optional(bool)
+    })),
     nfs = optional(object({
-      server       = string
-      path         = optional(string)
-      is_read_only = optional(bool)
+      path      = string,
+      read_only = optional(bool),
+      server    = string
+    })),
+    secret = optional(object({
+      default_mode = optional(number),
+      secret       = string,
+      items = optional(list(object({
+        mode    = optional(number),
+        path    = string,
+        version = optional(string)
+      })))
     }))
   }))
-  default  = {}
+  default  = []
   nullable = false
   validation {
     condition = alltrue([
-      for k, v in var.volumes :
-      sum([for kk, vv in v : vv == null ? 0 : 1]) == 1
+      for v in var.volumes :
+      sum([
+        for k, vv in v :
+        k != "name" && vv != null ? 1 : 0
+      ]) == 1
     ])
     error_message = "Only one type of volume can be defined at a time."
   }
