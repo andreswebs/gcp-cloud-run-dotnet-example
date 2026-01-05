@@ -15,3 +15,6 @@ gcloud auth configure-docker gcr.io --quiet
 
 docker build --platform linux/amd64 --tag "${IMAGE_URI}" .
 docker push "${IMAGE_URI}"
+
+docker tag "${IMAGE_URI}" "${IMAGE_URI}:3"
+docker push "${IMAGE_URI}:3"
