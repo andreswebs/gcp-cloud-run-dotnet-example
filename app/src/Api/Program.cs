@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using SerilogTimings;
-using Api.Logging;
-using Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +11,7 @@ try
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Host.UseSerilog((context, config) =>
-    config.ReadFrom.Configuration(context.Configuration)
-          .Enrich.With<EventTypeEnricher>());
+    config.ReadFrom.Configuration(context.Configuration));
 
 var app = builder.Build();
 
@@ -23,15 +20,13 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-app.UseMiddleware<RequestLogContextMiddleware>();
-
 app.UseSerilogRequestLogging(opts =>
     opts.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
     {
         var clientIp = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() ??
                        httpContext.Connection.RemoteIpAddress?.ToString();
         diagnosticContext.Set("ClientIP", clientIp);
-        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].FirstOrDefault());
+        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["UserAgent"].FirstOrDefault());
         diagnosticContext.Set("RequestMethod", httpContext.Request.Method);
         diagnosticContext.Set("RequestPath", httpContext.Request.Path);
 

@@ -46,8 +46,16 @@ module "service" {
         #   value = "true"
         # },
         # {
-        #   name  = "DD_APM_ENABLED"
-        #   value = "true"
+        #   name  = "DD_ENV"
+        #   value = "devops-sandbox"
+        # },
+        # {
+        #   name  = "DD_SERVICE" ## must be identical to the Cloud Run service name
+        #   value = "example-api"
+        # },
+        # {
+        #   name  = "DD_VERSION" ## set to git sha
+        #   value = "3"
         # },
       ]
     },
