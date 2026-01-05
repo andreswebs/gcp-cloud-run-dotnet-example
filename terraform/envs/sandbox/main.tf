@@ -4,8 +4,18 @@ module "service" {
   region     = var.region
   name       = "example-api"
 
+  labels = {
+    service = "example-api"
+  }
+
   service_config = {
     invoker_iam_disabled = true
+  }
+
+  revision_config = {
+    labels = {
+      service = "example-api"
+    }
   }
 
   containers = [
@@ -46,17 +56,25 @@ module "service" {
         #   value = "true"
         # },
         # {
-        #   name  = "DD_ENV"
-        #   value = "devops-sandbox"
+        #   name  = "DD_APM_ENABLED"
+        #   value = "true"
         # },
         # {
-        #   name  = "DD_SERVICE" ## must be identical to the Cloud Run service name
-        #   value = "example-api"
+        #   name  = "DD_LOGS_INJECTION"
+        #   value = "true"
         # },
-        # {
-        #   name  = "DD_VERSION" ## set to git sha
-        #   value = "3"
-        # },
+        {
+          name  = "DD_ENV"
+          value = "devops-sandbox"
+        },
+        {
+          name  = "DD_SERVICE" ## must be identical to the Cloud Run "service" label
+          value = "example-api"
+        },
+        {
+          name  = "DD_VERSION" ## set to git sha
+          value = "4"
+        },
       ]
     },
     # {
@@ -77,6 +95,10 @@ module "service" {
     #           secret = "DD_API_KEY"
     #         }
     #       }
+    #     },
+    #     {
+    #       name  = "DD_SOURCE"
+    #       value = "csharp"
     #     },
     #   ]
     #   health_port = 5555 # DD_HEALTH_PORT
