@@ -4,14 +4,21 @@ using SerilogTimings;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var gcpProjectId = builder.Configuration["GCP:ProjectId"]
+                  ?? Environment.GetEnvironmentVariable("GOOGLE_CLOUD_PROJECT")
+                  ?? "unknown";
+
 try
 {
-    Log.Information("Starting up the application");
+Log.Information("Starting up the application");
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Host.UseSerilog((context, config) =>
-    config.ReadFrom.Configuration(context.Configuration));
+    config
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.WithProperty("GcpProjectId", gcpProjectId)
+);
 
 var app = builder.Build();
 
