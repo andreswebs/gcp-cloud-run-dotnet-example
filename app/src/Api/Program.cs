@@ -1,17 +1,18 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using SerilogTimings;
+using Api.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var gcpProjectId = builder.Configuration["GCP:ProjectId"]
-                  ?? Environment.GetEnvironmentVariable("GOOGLE_CLOUD_PROJECT")
-                  ?? "unknown";
+// Create a temporary logger for startup operations
+using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var startupLogger = loggerFactory.CreateLogger<Program>();
+
+var gcpProjectId = await GcpMetadataHelper.GetProjectIdWithFallbackAsync(builder.Configuration, startupLogger);
 
 try
 {
-Log.Information("Starting up the application");
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Host.UseSerilog((context, config) =>
@@ -27,22 +28,25 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-app.UseSerilogRequestLogging(opts =>
-    opts.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+app.UseSerilogRequestLogging(opts => opts.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
     {
-        var clientIp = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() ??
+        var request = httpContext.Request;
+        var remoteIp = request.Headers["X-Forwarded-For"].FirstOrDefault() ??
                        httpContext.Connection.RemoteIpAddress?.ToString();
-        diagnosticContext.Set("ClientIP", clientIp);
-        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["UserAgent"].FirstOrDefault());
-        diagnosticContext.Set("RequestMethod", httpContext.Request.Method);
-        diagnosticContext.Set("RequestPath", httpContext.Request.Path);
 
-        // Add correlation ID from header or trace identifier
-        httpContext.Request.Headers.TryGetValue("X-Correlation-ID", out var correlationId);
-        diagnosticContext.Set("CorrelationId", correlationId.FirstOrDefault() ?? httpContext.TraceIdentifier);
+        var httpRequest = new
+        {
+            requestMethod = request.Method,
+            requestUrl = $"{request.Scheme}://{request.Host}{request.Path}{request.QueryString}",
+            userAgent = request.Headers.UserAgent.FirstOrDefault(),
+            remoteIp,
+            referer = request.Headers.Referer.FirstOrDefault(),
+            protocol = request.Protocol
+        };
+
+        diagnosticContext.Set("httpRequest", httpRequest, destructureObjects: true);
     });
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
